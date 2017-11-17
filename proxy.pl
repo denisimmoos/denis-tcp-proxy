@@ -150,7 +150,7 @@ sub client_allowed {
 # Main
 #
 
-die "Usage: $0 <local port> <remote_host:remote_port> <on_failure_script>" unless @ARGV >= 2;
+die "Usage: $0 <local port> <remote_host:remote_port> <refresh in seconds>" unless @ARGV >= 2;
 
 my $local_port = shift;
 my ($remote_host, $remote_port) = split ':', shift();
