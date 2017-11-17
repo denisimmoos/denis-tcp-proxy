@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 
-
 use warnings;
 use strict;
 use Data::Dumper;
@@ -15,6 +14,7 @@ my %socket_map;
 my $script_dir = '/home/ec2-user/denis-tcp-proxy/scripts'; 
 
 my $debug = 1;
+my $daemonize = 1;
 my $refresh_default = 120;
 
 #===============================================================================
@@ -56,6 +56,27 @@ sub WARN_handler {
     syslog('info',$msg);
 }
 $SIG{__WARN__} = 'WARN_handler';
+
+#===============================================================================
+# DEMONIZE
+#===============================================================================
+
+sub daemonize {
+   use POSIX;
+   POSIX::setsid or die "setsid: $!";
+   my $pid = fork() // die $!; #//
+   exit(0) if $pid;
+
+   chdir "/";
+   umask 0;
+   for (0 .. (POSIX::sysconf (&POSIX::_SC_OPEN_MAX) || 1024))
+      { POSIX::close $_ }
+   open (STDIN, "</dev/null");
+   open (STDOUT, ">/dev/null");
+   open (STDERR, ">&STDOUT");
+ 
+  return $pid;
+ }
 
 #####################################################################
 
@@ -151,6 +172,11 @@ sub client_allowed {
 #
 
 die "Usage: $0 <local port> <remote_host:remote_port> <refresh in seconds>" unless @ARGV >= 2;
+
+# 
+if ($daemonize) {
+	my $pid = &daemonize();
+}
 
 my $local_port = shift;
 my ($remote_host, $remote_port) = split ':', shift();
