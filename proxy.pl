@@ -104,6 +104,7 @@ sub new_connection {
     my $remote_port = shift;
     my $script_on_failure = shift;
     my $msg = shift;
+    my $lockfile = shift;
 
     my $client = $server->accept;
     my $client_ip = client_ip($client);
@@ -119,6 +120,12 @@ sub new_connection {
     my $remote = new_conn($remote_host, $remote_port);
 
     if (ref($remote)) {
+
+        # the connection is established
+	if  ( -f $lockfile ) { 
+		unlink $lockfile or warn "Could not unlink $lockfile: $!\n";
+        }
+
     	$ioset->add($client);
     	$ioset->add($remote);
 
@@ -128,10 +135,17 @@ sub new_connection {
     else {
       print "Connection to $remote_host:$remote_port failed.\n" if $debug;
       if ($script_on_failure ne 'none') {
+
     		    my $client = $server->accept;
 		    $client->send("$msg");
-		    $client->shutdown("1");
-		    system("$script_on_failure"); 
+		    $client->shutdown("2");
+
+		    if  ( not -f "$lockfile" ) {
+		    	system("$script_on_failure"); 
+                        open(my $fh, '>', "$lockfile" ) or warn "Cannot create $lockfile";
+		        print $fh "";
+                        close($fh) or warn "Cannot close $lockfile";
+                    }
       }
     }
 
@@ -209,6 +223,12 @@ if ( -f "$script_dir/$remote_host:$remote_port.sh" ) {
     	print "Using $script_on_failure\n" if $debug;
 }
 
+my $lockfile = "/tmp/$remote_host:$remote_port.lock";
+
+if  ( -f $lockfile ) { 
+	unlink $lockfile or warn "Could not unlink $lockfile: $!\n";
+}
+
 print "Starting a server on 0.0.0.0:$local_port\n";
 my $server = new_server('0.0.0.0', $local_port);
 $ioset->add($server);
@@ -217,7 +237,7 @@ while (1) {
     for my $socket ($ioset->can_read) {
         if ($socket == $server) {
                 print "Trying to connect to $remote_host:$remote_port.\n" if $debug;
-		new_connection($server, $remote_host, $remote_port, $script_on_failure, $msg);
+		new_connection($server, $remote_host, $remote_port, $script_on_failure, $msg, $lockfile );
         }
         else {
             next unless exists $socket_map{$socket};
