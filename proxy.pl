@@ -205,13 +205,53 @@ Connection: Closed
 <html>
 <head>
 <meta http-equiv="refresh" content="$refresh" />
+<style>
+p {
+  text-align: center;
+  font-size: 60px;
+}
+</style>
 </head>
    <body>
-    <img src="https://www.one-inside.com/wp-content/uploads/2015/10/Inside-Logo.png"> 
-<pre>
-Trying to launch the Service in $refresh seconds be patient ...
-</pre>
- </body>
+<p>
+Your service will be loaded in ... 
+</p>
+<br />
+<p id="demo"></p>
+<script>
+// Set the date we're counting down to
+var countDownDate = new Date();
+    countDownDate.setSeconds(countDownDate.getSeconds() + $refresh + 1);
+    countDownDate.getTime();
+    
+// Update the count down every 1 second
+var x = setInterval(function() {
+
+    // Get todays date and time
+    var now = new Date().getTime();
+    
+    // Find the distance between now an the count down date
+    var distance = countDownDate - now;
+    
+    // Time calculations for days, hours, minutes and seconds
+    var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    
+    // Output the result in an element with id="demo"
+    document.getElementById("demo").innerHTML = days + "d " + hours + "h "
+    + minutes + "m " + seconds + "s ";
+    
+    // If the count down is over, write some text 
+    if (distance < 0) {
+        clearInterval(x);
+        document.getElementById("demo").innerHTML = "launching ...";
+        location.reload(); 
+    }
+}, 1000);
+</script>
+</body>
 </html>
 
 END_MESSAGE
